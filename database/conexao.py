@@ -15,15 +15,15 @@ def criar_tabela():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS vagas (
             id_vaga INTEGER PRIMARY KEY AUTOINCREMENT,
-            cargo_buscado TEXT,
-            titulo TEXT,
+            cargo_buscado TEXT NOT NULL,
+            titulo TEXT NOT NULL,
             empresa TEXT,
             local TEXT,
             modelo TEXT,
             tipo_vaga TEXT,
             afirmativa_pcd TEXT,
-            data TEXT,
-            link TEXT UNIQUE
+            data TEXT NOT NULL,
+            link TEXT UNIQUE NOT NULL
         )
     """)
     conexao.commit()
