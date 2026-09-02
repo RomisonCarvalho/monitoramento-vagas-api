@@ -1,15 +1,18 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi import HTTPException
-from pydantic import BaseModel, field_validator, ValidationInfo
+from pydantic import BaseModel, field_validator, ValidationInfo, ConfigDict
 from datetime import date
-from database.conexao import criar_tabela, conectar
+from database.conexao import criar_tabela, conectar, obter_sessao
+from database.models import VagaModel
 import sqlite3
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 app = FastAPI()
 criar_tabela()  
 
 
-class Vaga(BaseModel):
+class VagaCreate(BaseModel):
     cargo_buscado: str
     titulo: str
     empresa: str
@@ -28,8 +31,23 @@ class Vaga(BaseModel):
             raise ValueError(f"O campo {info.field_name} não pode ser vazio ou conter apenas espaços.")
         return value_stripped
 
+class VagaResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id_vaga: int
+    cargo_buscado: str
+    titulo: str
+    empresa: str
+    local: str | None = None
+    modelo: str | None = None
+    tipo_vaga: str | None = None
+    afirmativa_pcd: str | None = None
+    data: date
+    link: str    
+
+
 @app.post("/vagas/")
-def armazenar_vaga(vaga: Vaga):
+def armazenar_vaga(vaga: VagaCreate):
     print(f"Vaga recebida: {vaga}")
     conexao = conectar()
     cursor = conexao.cursor()
@@ -40,7 +58,6 @@ def armazenar_vaga(vaga: Vaga):
             tipo_vaga, afirmativa_pcd, data, link
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
-
     valores = (
         vaga.cargo_buscado,
         vaga.titulo,
@@ -52,6 +69,7 @@ def armazenar_vaga(vaga: Vaga):
         vaga.data.isoformat(),
         vaga.link
     )
+
     try:
         cursor.execute(sql, valores)
         conexao.commit()
@@ -65,16 +83,27 @@ def armazenar_vaga(vaga: Vaga):
     return vaga.model_dump()
 
 
-@app.get("/vagas/")
-def pegar_vagas():
-    conexao = conectar()
-    cursor = conexao.cursor()
-    
-    cursor.execute("SELECT * FROM vagas")
-    colunas = [col[0] for col in cursor.description]
-    linhas = cursor.fetchall()
-    vagas = [dict(zip(colunas, linha)) for linha in linhas]
-    
-    conexao.close()
-    
+@app.get("/vagas/", response_model = list[VagaResponse])
+def pegar_vagas(sessao: Session = Depends(obter_sessao)):
+    consulta_vagas = select(VagaModel)
+    resultado = sessao.execute(consulta_vagas)
+    vagas = resultado.scalars().all()
     return vagas
+  
+
+
+
+
+
+
+    # conexao = conectar()
+    # cursor = conexao.cursor()
+    
+    # cursor.execute("SELECT * FROM vagas")
+    # colunas = [col[0] for col in cursor.description]
+    # linhas = cursor.fetchall()
+    # vagas = [dict(zip(colunas, linha)) for linha in linhas]
+    
+    # conexao.close()
+    
+    # return vagas
