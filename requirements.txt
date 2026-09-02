@@ -1,1 +1,4 @@
-# Dependências serão adicionadas conforme cada etapa do projeto for implementada.
+fastapi==0.141.1
+uvicorn==0.52.4
+SQLAlchemy==2.0.52
+pydantic==2.13.4
