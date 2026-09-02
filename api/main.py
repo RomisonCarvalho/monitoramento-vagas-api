@@ -1,15 +1,14 @@
-from fastapi import FastAPI, Depends
-from fastapi import HTTPException
+from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel, field_validator, ValidationInfo, ConfigDict
 from datetime import date
-from database.conexao import criar_tabela, conectar, obter_sessao
+from database.conexao import criar_tabela, obter_sessao
 from database.models import VagaModel
-import sqlite3
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
 app = FastAPI()
+
 criar_tabela()  
 
 
@@ -59,41 +58,6 @@ def armazenar_vaga(vaga: VagaCreate, sessao: Session = Depends(obter_sessao)):
     except IntegrityError:
         sessao.rollback()
         raise HTTPException(status_code=409, detail="Vaga já cadastrada.")
-
-
-    # print(f"Vaga recebida: {vaga}")
-    # conexao = conectar()
-    # cursor = conexao.cursor()
-
-    # sql = """
-    #     INSERT INTO vagas (
-    #         cargo_buscado, titulo, empresa, local, modelo, 
-    #         tipo_vaga, afirmativa_pcd, data, link
-    #     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    # """
-    # valores = (
-    #     vaga.cargo_buscado,
-    #     vaga.titulo,
-    #     vaga.empresa,
-    #     vaga.local,
-    #     vaga.modelo,
-    #     vaga.tipo_vaga,
-    #     vaga.afirmativa_pcd,
-    #     vaga.data.isoformat(),
-    #     vaga.link
-    # )
-
-    # try:
-    #     cursor.execute(sql, valores)
-    #     conexao.commit()
-    # except sqlite3.IntegrityError:
-    #     raise HTTPException(
-    #         status_code=409,
-    #         detail="Essa vaga já foi cadastrada anteriormente (link duplicado)."
-    #     )
-    # finally:
-    #     conexao.close()
-    # return vaga.model_dump()
 
 
 @app.get("/vagas/", response_model=list[VagaResponse])

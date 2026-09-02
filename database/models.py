@@ -9,11 +9,11 @@ class VagaModel(Base):
     id_vaga: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     cargo_buscado: Mapped[str] = mapped_column(String, nullable=False)
     titulo: Mapped[str] = mapped_column(String, nullable=False)
-    empresa: Mapped[str | None] = mapped_column(String)
+    empresa: Mapped[str] = mapped_column(String, nullable=False)
     local: Mapped[str | None] = mapped_column(String)
     modelo: Mapped[str | None] = mapped_column(String)
     tipo_vaga: Mapped[str | None] = mapped_column(String)
     afirmativa_pcd: Mapped[str | None] = mapped_column(String)
-    data: Mapped[date] = mapped_column(Date)
+    data: Mapped[date] = mapped_column(Date, nullable=False)
     link: Mapped[str] = mapped_column(String, unique=True, nullable=False)
 
