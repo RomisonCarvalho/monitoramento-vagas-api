@@ -16,7 +16,7 @@ class VagaCreate(BaseModel):
     cargo_buscado: str
     titulo: str
     empresa: str
-    local: str | None = None
+    localizacao: str | None = None
     modelo: str | None = None
     tipo_vaga: str | None = None
     afirmativa_pcd: str | None = None
@@ -39,7 +39,7 @@ class VagaResponse(BaseModel):
     cargo_buscado: str
     titulo: str
     empresa: str
-    local: str | None = None
+    localizacao: str | None = None
     modelo: str | None = None
     tipo_vaga: str | None = None
     afirmativa_pcd: str | None = None
