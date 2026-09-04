@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Header
 from pydantic import BaseModel, field_validator, ValidationInfo, ConfigDict
 from datetime import date
 from database.conexao import criar_tabela, obter_sessao
@@ -6,6 +6,20 @@ from database.models import VagaModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from dotenv import load_dotenv
+import os
+
+
+load_dotenv()
+API_KEY = os.getenv("API_KEY")
+
+if API_KEY is None:
+    raise RuntimeError("A 'API_KEY' não está definida. A aplicação não pode ser iniciada sem as credenciais de autenticação.")
+
+def validar_api_key(api_key_header: str | None = Header(None, alias="X-API-Key")):
+    if api_key_header != API_KEY:
+        raise HTTPException(status_code=401, detail="Acesso não autorizado: Chave de API inválida")
+    
 
 app = FastAPI()
 
@@ -47,7 +61,7 @@ class VagaResponse(BaseModel):
     link: str    
 
 
-@app.post("/vagas/", response_model=VagaResponse)
+@app.post("/vagas/", response_model=VagaResponse, dependencies=[Depends(validar_api_key)])
 def armazenar_vaga(vaga: VagaCreate, sessao: Session = Depends(obter_sessao)):
     vaga_model = VagaModel(**vaga.model_dump())
     try:
