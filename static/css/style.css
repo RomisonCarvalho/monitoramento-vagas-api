@@ -1,0 +1,197 @@
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Verdana;
+    background-color: #0f172a;
+}
+
+.pagina-inicial {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card {
+    background-color: #1e293b;
+    padding: 50px;
+    border-radius: 15px;
+    text-align: center;
+    max-width: 700px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    width: 90%;
+    box-sizing: border-box;
+}
+
+.card h1 {
+    color: #f8fafc;
+}
+
+.card p {
+    line-height: 1.6;
+    color: #94a3b8;
+}
+
+.botoes {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.botoes a {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 16px;
+    background-color: #3b82f6;
+    color: black;
+    text-decoration: none;
+    transition: 0.15s;
+    box-shadow: 0 4px 0 #444;
+}
+
+.botoes a:hover {
+    background-color: #2563eb;
+}
+
+.botoes a:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 #444;
+}
+
+.banner {
+    width: 100%;
+    height: 180px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+    border: 1px solid #3b82f6;
+    box-sizing: border-box;
+}
+
+.banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+@media (max-width: 600px) {
+    .card {
+        padding: 25px;
+    }
+
+    .card h1 {
+        font-size: 24px;
+    }
+
+    .banner {
+        height: 120px;
+    }
+
+    .botoes {
+        flex-direction: column;
+    }
+    .conteudo-vagas {
+    padding: 20px;
+    }
+
+    .titulo-cargo {
+        font-size: 20px;
+    }
+
+    .vaga-card {
+        padding: 20px;
+    }
+
+    .vaga-card h3 {
+        font-size: 16px;
+    }
+
+    .vaga-info span {
+    padding: 8px;
+    }
+}
+
+
+.conteudo-vagas {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 50px;
+    box-sizing: border-box;
+}
+.conteudo-vagas h1 {
+    color: #f8fafc;
+}
+
+.conteudo-vagas p {
+    line-height: 1.6;
+    color: #94a3b8;
+}
+
+.vaga-card h3 {
+    color: #f8fafc;
+    margin-top: 0;
+}
+
+.vaga-card {
+    line-height: 1.6;
+    color: #94a3b8;
+    background-color: #1e293b;
+    padding: 25px;
+    border-radius: 8px;
+    margin-top: 30px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.vaga-info {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0; 
+    flex-wrap: wrap;  
+}
+
+.vaga-info span {
+    background-color: #0f172a;
+    color: #93c5fd;
+    border: 1px solid #3b82f6;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.titulo-cargo {
+    color: #93c5fd;
+    margin-top: 40px;
+    margin-bottom: 20px;
+    font-size: 22px;
+}
+
+.vaga-card a {
+    display: inline-block;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 14px;
+    background-color: #3b82f6;
+    color: black;
+    text-decoration: none;
+    transition: 0.15s;
+    box-shadow: 0 4px 0 #444;
+}
+
+.vaga-card a:hover {
+    background-color: #2563eb;
+}
+
+.vaga-card a:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 #444;
+}
+
+.mensagem-erro {
+    color: #fca5a5;
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 30px;
+}
