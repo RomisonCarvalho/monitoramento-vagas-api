@@ -1,4 +1,5 @@
 
+// Consulta as vagas pela API e monta dinamicamente o painel de resultados.
 async function buscar_vagas(){
     const listaVagas = document.getElementById('lista-vagas'); 
 
@@ -7,15 +8,21 @@ async function buscar_vagas(){
 
     try {
         const resposta = await fetch('/vagas/');
-        
+   
         if (!resposta.ok) {
             throw new Error(`Erro HTTP: ${resposta.status}`);
         }
 
         const vagas = await resposta.json();
 
+        // Atualiza o contador com o total de vagas retornadas pela API.
+        const contadorVagas = document.getElementById('total-vagas');
+        contadorVagas.textContent = `${vagas.length} vagas encontradas`;
+
+        // Ordena as vagas da publicação mais recente para a mais antiga.
         vagas.sort((a, b) => new Date(b.data) - new Date(a.data));
 
+        // Agrupa as vagas pelo cargo utilizado na busca da automação.
         const vagasPorCargo = {};
         vagas.forEach(vaga => {
             const cargo = vaga.cargo_buscado;
@@ -25,6 +32,7 @@ async function buscar_vagas(){
             vagasPorCargo[cargo].push(vaga);
         });
 
+        // Cria uma seção para cada cargo e os respectivos cards de vagas.
         Object.entries(vagasPorCargo).forEach(([cargo, vagasDoCargo]) => {
             const grupoCargo = document.createElement('div');
             grupoCargo.className = 'grupo-cargo';
@@ -51,6 +59,7 @@ async function buscar_vagas(){
                     vagaInfo.className = 'vaga-info';
                     vagaCard.appendChild(vagaInfo);
 
+                        // Exibe somente informações opcionais que realmente estejam disponíveis.
                         if (vaga.localizacao && vaga.localizacao !== 'Não informado') {
                             const localizacaoVaga = document.createElement('span');
                             localizacaoVaga.textContent = vaga.localizacao;
@@ -73,6 +82,7 @@ async function buscar_vagas(){
                             pcdVaga.textContent = vaga.afirmativa_pcd;
                             vagaInfo.appendChild(pcdVaga);
                         }
+                        // Converte YYYY-MM-DD para o formato brasileiro DD/MM/YYYY.
                         const dataVaga = document.createElement('span');                                        
                         const [ano, mes, dia] = vaga.data.split('-');
                         dataVaga.textContent = `Publicada em ${dia}/${mes}/${ano}`;                                       
@@ -85,12 +95,12 @@ async function buscar_vagas(){
                         linkVaga.textContent = 'Ver vaga';
                         vagaCard.appendChild(linkVaga);
 
-
                 grupoCargo.appendChild(vagaCard);   
             });
         });
     }
     catch (erro) {
+        // Exibe uma mensagem amigável caso a consulta à API falhe.
         console.error('Erro ao carregar vagas:', erro);
 
         listaVagas.textContent = 'Não foi possível carregar as vagas. Tente novamente mais tarde.';

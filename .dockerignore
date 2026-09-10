@@ -23,7 +23,7 @@ ENV/
 # Git
 .git/
 
-# Banco SQLite antigo
+# Banco de dados local legado
 *.db
 
 # Logs
@@ -34,7 +34,7 @@ ENV/
 .mypy_cache/
 .ruff_cache/
 
-# Build Python
+# Build / packaging
 build/
 dist/
 *.egg-info/

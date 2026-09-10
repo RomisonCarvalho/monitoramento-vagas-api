@@ -1,9 +1,17 @@
+/* =========================
+   Estilos globais
+   ========================= */
+
 body {
     margin: 0;
     min-height: 100vh;
     font-family: Verdana;
     background-color: #0f172a;
 }
+
+/* =========================
+   Página inicial
+   ========================= */
 
 .pagina-inicial {
     display: flex;
@@ -59,6 +67,10 @@ body {
     box-shadow: 0 0 0 #444;
 }
 
+/* =========================
+   Banner
+   ========================= */
+
 .banner {
     width: 100%;
     height: 180px;
@@ -76,6 +88,10 @@ body {
     display: block;
 }
 
+/* =========================
+   Responsividade
+   ========================= */
+
 @media (max-width: 600px) {
     .card {
         padding: 25px;
@@ -92,7 +108,11 @@ body {
     .botoes {
         flex-direction: column;
     }
-    .conteudo-vagas {
+    /* =========================
+   Painel de vagas
+   ========================= */
+
+.conteudo-vagas {
     padding: 20px;
     }
 
@@ -104,7 +124,11 @@ body {
         padding: 20px;
     }
 
-    .vaga-card h3 {
+    /* =========================
+   Cards e informações das vagas
+   ========================= */
+
+.vaga-card h3 {
         font-size: 16px;
     }
 
@@ -188,6 +212,10 @@ body {
     transform: translateY(4px);
     box-shadow: 0 0 0 #444;
 }
+
+/* =========================
+   Mensagens de erro
+   ========================= */
 
 .mensagem-erro {
     color: #fca5a5;

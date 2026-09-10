@@ -1,7 +1,10 @@
+# Ambiente local simplificado para executar a API em container.
 services:
   api:
     build: .
     ports:
       - "8000:8000"
+
+    # Carrega DATABASE_URL e API_KEY do arquivo .env local.
     env_file:
       - .env

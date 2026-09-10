@@ -28,13 +28,6 @@ ENV/
 .coverage
 htmlcov/
 
-# Logs
-logs/*.log
-
-# Local data / reports
-reports/
-*.csv
-
 # OS files
 .DS_Store
 Thumbs.db
@@ -43,6 +36,3 @@ Thumbs.db
 build/
 dist/
 *.egg-info/
-
-# Selenium / browser artifacts
-screenshots/

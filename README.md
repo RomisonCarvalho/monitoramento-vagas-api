@@ -1,50 +1,50 @@
 # Sistema de Monitoramento de Vagas — API
 
-> 🚧 Projeto em desenvolvimento
-
 API REST desenvolvida em FastAPI como evolução do projeto [Automação de Busca de Vagas com Selenium](https://github.com/RomisonCarvalho/selenium-vagas-gupy).
 
-O projeto foi criado para transformar uma automação local de coleta de vagas em uma arquitetura distribuída, separando a busca e o tratamento dos dados da camada responsável por validação, persistência e disponibilização das informações.
+O projeto separa a coleta de vagas da camada responsável por validação, persistência e disponibilização das informações. A automação e a API são mantidas em repositórios independentes e se comunicam por HTTP.
 
 ## Objetivo
 
-Disponibilizar uma API responsável por receber, validar, armazenar e consultar vagas coletadas pela automação Selenium.
+Disponibilizar um backend responsável por receber, validar, armazenar e consultar vagas coletadas automaticamente.
 
-A aplicação tem como objetivos:
+A aplicação:
 
-- receber vagas enviadas pela automação por meio de requisições HTTP;
-- validar os dados com Pydantic;
-- persistir as informações em PostgreSQL;
-- impedir o cadastro de vagas duplicadas;
-- disponibilizar endpoints de consulta;
-- proteger operações de escrita com API Key;
-- executar em container Docker;
-- disponibilizar a API em ambiente de nuvem;
-- utilizar secrets externos para credenciais e configurações sensíveis.
+- recebe vagas enviadas pela automação por requisições HTTP;
+- valida os dados com Pydantic;
+- persiste as informações em PostgreSQL;
+- impede o cadastro duplicado da mesma vaga pelo link;
+- disponibiliza consulta pública das vagas armazenadas;
+- protege operações de escrita com API Key;
+- disponibiliza uma interface web para consulta das oportunidades;
+- executa em container Docker;
+- está implantada no Google Cloud Run;
+- utiliza secrets externos para credenciais e configurações sensíveis.
 
 ## Arquitetura atual
 
 ```text
 Automação Selenium
-       ↓
- HTTPS + X-API-Key
-       ↓
-Google Cloud Run
-       ↓
-     FastAPI
-       ↓
-    Pydantic
-       ↓
-   SQLAlchemy
-       ↓
-     Psycopg
-       ↓
-Neon PostgreSQL
+(repositório separado / Cloud Run Job)
+              ↓
+       HTTPS + X-API-Key
+              ↓
+     Google Cloud Run
+              ↓
+           FastAPI
+          ↙       ↘
+ Interface web   Pydantic
+                    ↓
+               SQLAlchemy
+                    ↓
+                 Psycopg
+                    ↓
+             Neon PostgreSQL
 ```
 
-A automação e a API permanecem em repositórios separados e se comunicam exclusivamente por HTTP.
+A API é empacotada em uma imagem Docker, armazenada no Google Artifact Registry e executada como serviço no Google Cloud Run.
 
-A API é empacotada em uma imagem Docker, armazenada no Google Artifact Registry e executada no Google Cloud Run. As credenciais de produção são disponibilizadas à aplicação por meio do Google Secret Manager.
+Na execução em nuvem, `DATABASE_URL` e `API_KEY` são fornecidas pelo Google Secret Manager. O banco PostgreSQL utilizado pela aplicação está hospedado no Neon.
 
 ## Tecnologias
 
@@ -55,12 +55,15 @@ A API é empacotada em uma imagem Docker, armazenada no Google Artifact Registry
 - Psycopg
 - PostgreSQL
 - Neon
+- Uvicorn
+- HTML
+- CSS
+- JavaScript
 - Docker
 - Docker Compose
 - Google Artifact Registry
 - Google Cloud Run
 - Google Secret Manager
-- Uvicorn
 - python-dotenv
 - Git / GitHub
 
@@ -68,23 +71,42 @@ A API é empacotada em uma imagem Docker, armazenada no Google Artifact Registry
 
 A API recebe os seguintes dados de cada vaga:
 
-| Campo | Descrição |
-| --- | --- |
-| `cargo_buscado` | Termo utilizado pela automação na pesquisa |
-| `titulo` | Título da vaga |
-| `empresa` | Empresa responsável pela oportunidade |
-| `localizacao` | Localização informada pela vaga |
-| `modelo` | Modelo de trabalho |
-| `tipo_vaga` | Tipo de contratação/oportunidade |
-| `afirmativa_pcd` | Indicação de vaga também destinada a PcD |
-| `data` | Data de publicação |
-| `link` | Link da vaga no Gupy |
+| Campo              | Descrição                                  |
+| ------------------ | -------------------------------------------- |
+| `cargo_buscado`  | Termo utilizado pela automação na pesquisa |
+| `titulo`         | Título da vaga                              |
+| `empresa`        | Empresa responsável pela oportunidade       |
+| `localizacao`    | Localização informada pela vaga            |
+| `modelo`         | Modelo de trabalho                           |
+| `tipo_vaga`      | Tipo de contratação/oportunidade           |
+| `afirmativa_pcd` | Indicação de vaga também destinada a PcD  |
+| `data`           | Data de publicação                         |
+| `link`           | Link da vaga no Gupy                         |
 
 Os campos `cargo_buscado`, `titulo`, `empresa`, `data` e `link` são obrigatórios.
 
-O `link` possui restrição de unicidade no banco de dados e é utilizado para impedir o cadastro duplicado da mesma vaga.
+Os campos textuais obrigatórios têm os espaços nas extremidades removidos e não aceitam strings vazias ou compostas apenas por espaços.
+
+O campo `link` possui restrição de unicidade no banco e funciona como controle de duplicidade.
 
 ## Endpoints
+
+### `GET /`
+
+Renderiza a página inicial da aplicação, com acesso à documentação interativa e ao painel de vagas.
+
+### `GET /consultar-vagas`
+
+Renderiza o painel web de consulta.
+
+O painel:
+
+- consulta os dados pelo endpoint `GET /vagas/`;
+- exibe o total de vagas atualmente cadastradas;
+- organiza as oportunidades pelo cargo utilizado na busca;
+- ordena as vagas pela data de publicação;
+- apresenta os dados em cards;
+- disponibiliza acesso ao link original da oportunidade.
 
 ### `GET /vagas/`
 
@@ -93,29 +115,22 @@ Retorna a lista de vagas cadastradas.
 - acesso público;
 - banco vazio retorna uma lista vazia.
 
-### `GET /vagas/{id}`
-
-Retorna uma vaga específica pelo identificador.
-
-- acesso público;
-- utilizado para consulta individual dos registros.
-
 ### `POST /vagas/`
 
 Cadastra uma nova vaga.
 
 - operação protegida por API Key;
 - a chave deve ser enviada no header `X-API-Key`;
-- dados recebidos são validados com Pydantic;
-- duplicidades são tratadas pelo link da vaga.
+- os dados recebidos são validados com Pydantic;
+- duplicidades são tratadas pela restrição de unicidade do link.
 
 Principais respostas:
 
-| Status | Significado |
-| --- | --- |
-| `200` | Vaga cadastrada com sucesso |
-| `401` | API Key ausente ou inválida |
-| `409` | Vaga já cadastrada |
+| Status  | Significado                            |
+| ------- | -------------------------------------- |
+| `200` | Vaga cadastrada com sucesso            |
+| `401` | API Key ausente ou inválida           |
+| `409` | Vaga já cadastrada                    |
 | `422` | Erro de validação dos dados enviados |
 
 Exemplo de autenticação:
@@ -128,22 +143,23 @@ A chave real nunca deve ser armazenada no repositório.
 
 ## Validação dos dados
 
-Os modelos Pydantic validam os campos recebidos antes da persistência.
+O schema de entrada valida os dados antes da persistência.
 
 Nos campos textuais obrigatórios:
 
 - espaços nas extremidades são removidos;
-- strings vazias não são aceitas.
+- strings vazias não são aceitas;
+- strings contendo apenas espaços também não são aceitas.
 
-As respostas da API utilizam modelos compatíveis com os objetos retornados pelo SQLAlchemy.
+As respostas utilizam um schema compatível com os objetos retornados pelo SQLAlchemy.
 
 ## Persistência
 
-A API utiliza SQLAlchemy para comunicação com PostgreSQL.
+A API utiliza SQLAlchemy para comunicação com PostgreSQL por meio do driver Psycopg.
 
-A conexão é configurada por meio da variável de ambiente `DATABASE_URL`.
+A conexão é configurada pela variável de ambiente `DATABASE_URL`.
 
-Em produção, o banco está hospedado no Neon.
+Antes de criar o engine, a aplicação verifica se `DATABASE_URL` foi configurada. Sem uma URL válida, a inicialização é interrompida com uma mensagem explícita.
 
 O engine utiliza `pool_pre_ping=True`, permitindo que o SQLAlchemy valide conexões antes de reutilizá-las. Isso reduz falhas causadas por conexões encerradas durante períodos de inatividade em ambientes serverless.
 
@@ -154,26 +170,25 @@ O endpoint de cadastro é protegido por uma API Key compartilhada entre a automa
 A aplicação:
 
 - lê a chave esperada da variável de ambiente `API_KEY`;
+- rejeita a inicialização se a configuração estiver ausente ou vazia;
 - exige o header `X-API-Key` no `POST /vagas/`;
-- retorna `401` quando a chave está ausente ou inválida;
-- mantém os endpoints de consulta públicos.
+- retorna `401` quando a chave enviada está ausente ou inválida;
+- mantém as rotas de consulta públicas.
 
-Se `API_KEY` não estiver configurada, a aplicação não deve iniciar normalmente, evitando que o endpoint de escrita fique exposto sem autenticação.
-
-Em produção, `DATABASE_URL` e `API_KEY` são armazenadas no Google Secret Manager e disponibilizadas ao serviço do Cloud Run em tempo de execução.
+Na execução em nuvem, `DATABASE_URL` e `API_KEY` são armazenadas no Google Secret Manager e disponibilizadas ao serviço do Cloud Run em tempo de execução.
 
 ## Variáveis de ambiente
 
 Crie um arquivo `.env` a partir do `.env.example`:
 
 ```env
-DATABASE_URL=postgresql+psycopg://usuario:senha@host/banco
+DATABASE_URL=postgresql+psycopg://usuario:senha@host:5432/nome_do_banco
 API_KEY=sua_chave
 ```
 
 O arquivo `.env` não deve ser versionado.
 
-Em produção, as credenciais não são incluídas na imagem Docker. Elas são fornecidas pelo ambiente de execução.
+A aplicação utiliza `python-dotenv` para carregar essas variáveis localmente. Na execução em nuvem, as credenciais não são incluídas na imagem Docker.
 
 ## Estrutura principal
 
@@ -184,6 +199,13 @@ monitoramento-vagas-api/
 ├── database/
 │   ├── conexao.py
 │   └── models.py
+├── static/
+│   ├── css/
+│   │   └── style.css
+│   ├── images/
+│   │   └── BannerProjetoAPI.png
+│   └── js/
+│       └── consultar-vagas.js
 ├── .dockerignore
 ├── .env.example
 ├── .gitignore
@@ -194,7 +216,7 @@ monitoramento-vagas-api/
 └── requirements.txt
 ```
 
-A automação Selenium é mantida em um repositório separado.
+A automação Selenium é mantida no repositório [selenium-vagas-gupy](https://github.com/RomisonCarvalho/selenium-vagas-gupy).
 
 ## Execução local
 
@@ -202,24 +224,19 @@ A automação Selenium é mantida em um repositório separado.
 
 ```bash
 git clone https://github.com/RomisonCarvalho/monitoramento-vagas-api.git
-```
-
-Entre na pasta:
-
-```bash
 cd monitoramento-vagas-api
 ```
 
 ### 2. Crie e ative um ambiente virtual
 
 ```bash
-python -m venv venv
+python -m venv .venv
 ```
 
 No Windows:
 
 ```bash
-venv\Scripts\activate
+.venv\Scripts\activate
 ```
 
 ### 3. Instale as dependências
@@ -230,36 +247,43 @@ pip install -r requirements.txt
 
 ### 4. Configure as variáveis de ambiente
 
-Crie o arquivo `.env` com base no `.env.example` e preencha:
-
-```env
-DATABASE_URL=postgresql+psycopg://usuario:senha@host/banco
-API_KEY=sua_chave
-```
+Crie o arquivo `.env` com base no `.env.example` e preencha `DATABASE_URL` e `API_KEY`.
 
 ### 5. Execute a aplicação
 
 ```bash
-uvicorn api.main:app --reload
+python -m uvicorn api.main:app --reload
 ```
 
-A documentação interativa do FastAPI ficará disponível em:
+A aplicação ficará disponível em:
+
+```text
+http://127.0.0.1:8000
+```
+
+Documentação interativa:
 
 ```text
 http://127.0.0.1:8000/docs
+```
+
+Painel de vagas:
+
+```text
+http://127.0.0.1:8000/consultar-vagas
 ```
 
 ## Docker
 
 O projeto possui `Dockerfile` e pode ser executado de forma isolada em container.
 
-Exemplo de build:
+Build da imagem:
 
 ```bash
 docker build -t monitoramento-vagas-api .
 ```
 
-Exemplo de execução utilizando variáveis de ambiente de um arquivo `.env`:
+Execução utilizando as variáveis de um arquivo `.env`:
 
 ```bash
 docker run --env-file .env -p 8000:8000 monitoramento-vagas-api
@@ -269,7 +293,7 @@ O container utiliza a variável `PORT` quando fornecida pelo ambiente e assume a
 
 ## Docker Compose
 
-Para simplificar o desenvolvimento local:
+Para simplificar a execução local em container:
 
 ```bash
 docker compose up -d --build
@@ -287,16 +311,14 @@ Encerrar os serviços:
 docker compose down
 ```
 
-## Deploy em nuvem
+## Execução em nuvem
 
-A imagem Docker da API é publicada no Google Artifact Registry e utilizada pelo Google Cloud Run.
-
-Arquitetura de deploy:
+Na versão atual, a imagem Docker da API é armazenada no Google Artifact Registry e utilizada pelo Google Cloud Run.
 
 ```text
 Código
   ↓
-Docker image
+Imagem Docker
   ↓
 Google Artifact Registry
   ↓
@@ -307,42 +329,46 @@ Google Cloud Run
                  Neon PostgreSQL
 ```
 
-O serviço foi configurado para utilizar uma conta de serviço dedicada com acesso restrito aos secrets necessários.
+O serviço utiliza uma conta de serviço dedicada com acesso restrito aos secrets necessários.
 
-A API pode escalar para zero instâncias durante períodos sem tráfego, reduzindo o consumo de recursos.
+A configuração permite escalar para zero instâncias durante períodos sem tráfego, reduzindo o consumo de recursos.
 
-## Etapas do desenvolvimento
+## Evolução do projeto
 
-- [X] Definição do objetivo e escopo inicial
-- [X] Definição da arquitetura
-- [X] Criação do repositório
-- [X] Introdução ao FastAPI
-- [X] Criação dos endpoints
-- [X] Modelagem e validação com Pydantic
-- [X] Persistência com SQLAlchemy
-- [X] Migração para PostgreSQL
-- [X] Integração com Psycopg
-- [X] Controle de duplicidade pelo link
-- [X] Integração da automação com a API por HTTP
-- [X] Separação entre automação e backend
-- [X] Containerização com Docker
-- [X] Orquestração local com Docker Compose
-- [X] Banco PostgreSQL em nuvem com Neon
-- [X] Publicação da imagem no Google Artifact Registry
-- [X] Deploy no Google Cloud Run
-- [X] Gerenciamento de credenciais com Google Secret Manager
-- [X] Proteção do endpoint de escrita com `X-API-Key`
-- [X] Tratamento de conexões inválidas com `pool_pre_ping`
-- [X] Testes locais e em ambiente de nuvem
-- [ ] Evoluções futuras de observabilidade, testes automatizados e ciclo de vida das vagas
+O desenvolvimento passou pelas seguintes etapas:
+
+- definição do objetivo e da arquitetura;
+- criação dos endpoints e schemas Pydantic;
+- persistência inicialmente estudada e posteriormente estruturada com SQLAlchemy;
+- migração da persistência para PostgreSQL no Neon;
+- integração com Psycopg;
+- controle de duplicidade pelo link;
+- integração da automação e da API por HTTP;
+- separação da automação e do backend em repositórios independentes;
+- proteção do endpoint de escrita com `X-API-Key`;
+- criação da interface web para consulta das vagas;
+- adição do contador de oportunidades cadastradas;
+- containerização com Docker e Docker Compose;
+- publicação da imagem no Google Artifact Registry;
+- deploy da API no Google Cloud Run;
+- gerenciamento de credenciais com Google Secret Manager;
+- configuração de `pool_pre_ping` para conexões em ambiente serverless;
+- testes locais e em ambiente de nuvem.
+
+## Possíveis evoluções futuras
+
+O projeto foi concluído dentro do escopo definido. Evoluções futuras podem ser adicionadas como novos estudos, sem fazer parte dos requisitos da versão atual, por exemplo:
+
+- testes automatizados;
+- observabilidade mais detalhada;
+- filtros e paginação no painel;
+- acompanhamento do ciclo de vida das vagas.
 
 ## Status
 
-🚧 Projeto em evolução.
+✅ **Projeto concluído dentro do escopo definido.**
 
-A API já está funcional em ambiente de nuvem, recebe dados da automação Selenium, valida os payloads, persiste as vagas em PostgreSQL, controla duplicidades e protege operações de escrita por API Key.
-
-As próximas evoluções poderão incluir testes automatizados, documentação adicional de respostas, observabilidade mais detalhada e mecanismos para acompanhar a disponibilidade das vagas ao longo do tempo.
+A versão atual está funcional em ambiente de nuvem, recebe dados da automação Selenium, valida os payloads, persiste as vagas em PostgreSQL, controla duplicidades, protege operações de escrita por API Key e disponibiliza um painel web para consulta das oportunidades cadastradas.
 
 ## Autor
 
